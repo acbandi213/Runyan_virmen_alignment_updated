@@ -1,1 +1,2 @@
-# Runyan_virmen_alignment_updated
+# Alternative_virmen_alignment
+ align virtual reality maze with imaging and speaker outputs
