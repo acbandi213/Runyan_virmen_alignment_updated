@@ -93,8 +93,8 @@ class TestTask1Session:
                     f"Auditory context should have cue [0,1], got {cue}"
                 )
 
-    def test_number_of_switches(self):
-        """Number of context switches should match n_switches parameter."""
+    def test_number_of_switches_explicit(self):
+        """When n_switches is set explicitly, should stop after that many."""
         for n_sw in [1, 2, 3, 5]:
             session = Task1Session(
                 n_trials=500, block_size=50, n_switches=n_sw, seed=42
@@ -107,6 +107,19 @@ class TestTask1Session:
             assert switch_count == n_sw, (
                 f"Expected {n_sw} switches, got {switch_count}"
             )
+
+    def test_unlimited_switching_default(self):
+        """Default n_switches=None should alternate every block_size trials."""
+        session = Task1Session(n_trials=300, block_size=50, seed=42)
+        contexts = [t['metadata']['context'] for t in session.trials]
+        switch_count = sum(
+            1 for i in range(1, len(contexts))
+            if contexts[i] != contexts[i - 1]
+        )
+        expected = (300 // 50) - 1  # 5 switches for 6 blocks
+        assert switch_count == expected, (
+            f"Expected {expected} switches with unlimited, got {switch_count}"
+        )
 
     def test_fixation_epoch_no_stimulus(self):
         """During fixation, stimulus channels should be zero."""

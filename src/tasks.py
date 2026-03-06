@@ -71,18 +71,20 @@ def _direction_to_target(direction: str) -> int:
     return 0 if direction == 'left' else 1
 
 
-def _build_context_schedule(n_trials: int, block_size: int, n_switches: int,
-                            starting_context: str) -> List[Dict[str, Any]]:
+def _build_context_schedule(n_trials: int, block_size: int,
+                            starting_context: str,
+                            n_switches: int = None) -> List[Dict[str, Any]]:
     """Build the context schedule for a session.
 
-    Generates block assignments for each trial. Context switches occur every
-    block_size trials, up to n_switches times.
+    Generates block assignments for each trial. Context alternates every
+    block_size trials. By default, switching continues for the entire
+    session. If n_switches is set, stops switching after that many times.
 
     Args:
         n_trials: Total number of trials.
         block_size: Trials per block before a switch.
-        n_switches: Maximum number of context switches.
         starting_context: 'visual' or 'auditory'.
+        n_switches: Maximum number of context switches. None = unlimited.
 
     Returns:
         List of dicts with 'context', 'block_number', 'trial_in_block' per trial.
@@ -101,7 +103,8 @@ def _build_context_schedule(n_trials: int, block_size: int, n_switches: int,
         })
         trial_in_block += 1
 
-        if trial_in_block >= block_size and switches_done < n_switches:
+        can_switch = n_switches is None or switches_done < n_switches
+        if trial_in_block >= block_size and can_switch:
             current_context = 'auditory' if current_context == 'visual' else 'visual'
             block_number += 1
             trial_in_block = 0
@@ -172,7 +175,7 @@ class Task1Session:
     Args:
         n_trials: Total number of trials in the session.
         block_size: Number of trials per context block before a switch.
-        n_switches: Number of context switches within the session.
+        n_switches: Maximum context switches. None (default) = unlimited alternating.
         timesteps_fix: Fixation epoch length in timesteps.
         timesteps_stim: Stimulus epoch length in timesteps.
         timesteps_resp: Response epoch length in timesteps.
@@ -180,7 +183,7 @@ class Task1Session:
     """
 
     def __init__(self, n_trials: int = 300, block_size: int = 50,
-                 n_switches: int = 3, timesteps_fix: int = 5,
+                 n_switches: int = None, timesteps_fix: int = 5,
                  timesteps_stim: int = 10, timesteps_resp: int = 5,
                  seed: int = 42):
         self.n_trials = n_trials
@@ -204,7 +207,8 @@ class Task1Session:
 
         starting_context = rng.choice(['visual', 'auditory'])
         schedule = _build_context_schedule(
-            self.n_trials, self.block_size, self.n_switches, starting_context
+            self.n_trials, self.block_size, starting_context,
+            n_switches=self.n_switches
         )
 
         trials = []
@@ -272,7 +276,7 @@ class Task2Session:
     Args:
         n_trials: Total number of trials in the session.
         block_size: Number of trials per context block before a switch.
-        n_switches: Number of context switches within the session.
+        n_switches: Maximum context switches. None (default) = unlimited alternating.
         congruent_ratio: Fraction of trials that are congruent.
         timesteps_fix: Fixation epoch length in timesteps.
         timesteps_stim: Stimulus epoch length in timesteps.
@@ -281,7 +285,7 @@ class Task2Session:
     """
 
     def __init__(self, n_trials: int = 300, block_size: int = 50,
-                 n_switches: int = 3, congruent_ratio: float = 0.5,
+                 n_switches: int = None, congruent_ratio: float = 0.5,
                  timesteps_fix: int = 5, timesteps_stim: int = 10,
                  timesteps_resp: int = 5, seed: int = 42):
         self.n_trials = n_trials
@@ -312,7 +316,8 @@ class Task2Session:
 
         starting_context = rng.choice(['visual', 'auditory'])
         schedule = _build_context_schedule(
-            self.n_trials, self.block_size, self.n_switches, starting_context
+            self.n_trials, self.block_size, starting_context,
+            n_switches=self.n_switches
         )
 
         trials = []
